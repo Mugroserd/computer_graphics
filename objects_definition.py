@@ -1,5 +1,4 @@
 import math
-
 import graphics
 import numpy as np
 
