@@ -1,7 +1,6 @@
 import numpy as np
 from graphics import *
 from PIL import Image, ImageDraw
-
 import draw_stuff
 
 from object_parser import getPointDraw
