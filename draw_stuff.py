@@ -1,6 +1,5 @@
 import numpy as np
 from PIL import Image, ImageDraw
-
 import objects_definition as od
 
 
