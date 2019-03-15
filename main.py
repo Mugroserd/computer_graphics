@@ -1,28 +1,12 @@
+import sys
+from itertools import repeat
+
 import numpy as np
-from graphics import *
 from PIL import Image, ImageDraw
 
+import draw_stuff as ds
+import objects_definition as od
 from object_parser import getPointDraw
-
-
-def lineDotByDotFirst(x0, y0, x1, y1, win, color):
-    step = 0.01
-    arr = np.arange(0, 1, 0.01)
-    for i in arr:
-        point = Point((x0 * (1 - i) + i * x1), (y0 * (1 - i) + i * y1))
-        point.setFill(color)
-        point.draw(win)
-
-
-def lineDotByDotSecond(x0, y0, x1, y1, win, color):
-    step = 0.01
-    arr = np.arange(x0, x1, 1)
-    for i in arr:
-        t = (i - x0) / (x1 - x0)
-        point = Point(i, (y0 * (1 - t) + t * y1))
-        point.setFill(color)
-        point.draw(win)
-
 
 def swap(x, y):
     c = x
@@ -30,157 +14,126 @@ def swap(x, y):
     y = c
     return x, y
 
-#Брезенхэм
-def lineDotByDotfour(x0, y0, x1, y1, win, color):
-    steeps = False
-    if np.abs(x0 - x1) < np.abs(y0 - y1):
-        x0, y0 = swap(x0, y0)
-        x1, y1 = swap(x1, y1)
-        steeps = True
-    if (x0 > x1):
-        x0, x1 = swap(x0, x1)
-        y0, y1 = swap(y0, y1)
 
-    dx = x1 - x0
-    dy = y1 - y0
-    derror = np.abs(dy / dx)
-    error = 0
-    y = y0
-    arr = np.arange(x0, x1, 1)
-    for i in arr:
-        if steeps:
-            point = Point(y, i)
-            point.setFill(color)
-            point.draw(win)
-        else:
-            point = Point(i, y)
-            point.setFill(color)
-            point.draw(win)
-        error += derror
-        if (error > 0.5):
-            if y1 > y0:
-                y += 1
-            else:
-                y += -1
-            error -= 1
-
-#Ву
-def lineDotByDotBy(x0, y0, x1, y1, win, color):
-    steeps = False
-    if np.abs(x0 - x1) < np.abs(y0 - y1):
-        x0, y0 = swap(x0, y0)
-        x1, y1 = swap(x1, y1)
-        steeps = True
-    if (x0 > x1):
-        x0, x1 = swap(x0, x1)
-        y0, y1 = swap(y0, y1)
-
-    dx = x1 - x0
-    dy = y1 - y0
-    derror = np.abs(dy / dx)
-    error = 0
-    y = y0
-    sy = 0
-    if (y1 > y0):
-        sy = 1
-    else:
-        sy = -1
-
-    arr = np.arange(x0, x1, 1)
-    for i in arr:
-        if not steeps:
-            point = Point(i, y)
-            point.setFill(color_rgb(0, 0, 255))
-            point.draw(win)
-            point = Point(i, y + sy)
-            point.setFill(color_rgb(0, 0, 255))
-            point.draw(win)
-        else:
-            point = Point(y, i)
-            point.setFill(color_rgb(0, 0, 255))
-            point.draw(win)
-            point = Point(y + sy, i)
-            point.setFill(color_rgb(0, 0, 255))
-            point.draw(win)
-        error += derror
-        if (error > 1):
-            y += sy
-
-            error -= 1
+def get_point(index):
+    """
+    extract 3D point from vertex with specified index with scale and center point, recording to main image
+    :param index: index of point in vertex, starting form 0
+    :return: 3D Point from triangle module
+    """
+    return od.Point(scale * vertex[index, 0] + center,
+                    scale * vertex[index, 1] + center,
+                    scale * vertex[index, 2] + center)
 
 
-def embeddedLine():
-    win = GraphWin('Line', 200, 200)
-
-    rect = Rectangle(Point(0, 0), Point(199, 199))
-    rect.setFill("black")
-    rect.draw(win)
-    line = Point(4, 10.9)
-    line.setFill("white")
-    line.draw(win)
-    line = Line(Point(9.9, 10), Point(190, 101.9))
-    line.setFill("white")
-    line.draw(win)
-    win.getMouse()
-    win.close()
+# завел отдельный метод, потому что чтобы унифицировать с get_point, то надо будет постоянно массив передавать, а это так себе затея
+# думаю, и так нормально. Вычитать нужно, потому что он так в каком-то перевернутом виде. Установил просто эмпирически
+# texture -- картинка с текстурой, сами значения в обж лежат в диапазоне от 0 до 1, так что надо умножать на размер по каждому измерению
+def get_texture_point(index):
+    return od.Point(texture.size[0] * float(texture_coordinates[index].first),
+                    texture.size[1] -
+                    texture.size[1] * float(texture_coordinates[index].second), 0)
 
 
-def preparation(width):
-    win = GraphWin('Line', width, width)
-    win.setBackground("grey")
-    center = width / 2
-    # lineDotByDot(100, 100, 150, 150, win, "green")
-    star(center, center, 13, center, win)
+def setParametrsForProjection():
+    camera_offset = 14
+    f_u = 1000
+    f_v = 1000
+    u_0 = 500
+    v_0 = 500
+    return camera_offset, f_u, f_v, u_0, v_0
 
 
-def star(x0, y0, rayNumber, radius, win):
-    arr = np.arange(-np.pi, np.pi, 2 * np.pi / rayNumber)
-    print(arr)
-    for i in arr:
-        lineDotByDotBy(x0, y0, (radius * np.cos(i)) + x0, (radius * np.sin(i)) + y0, win, "white")
+def new3DCoordinates(t, axis, angle):
+    if (axis[0] == 1):
+        alpha = angle[0]  # угол
+        R_x = np.array(np.zeros((3, 4)))  # вращение вокруг оси х
+        R_x[0, 0] = 1
+        R_x[1, 1] = np.cos(alpha)
+        R_x[2, 2] = np.cos(alpha)
+        R_x[1, 2] = (-1) * np.sin(alpha)
+        R_x[2, 1] = np.sin(alpha)
+        R_x[:, 3] = t
 
-    win.getMouse()
-    win.close()
+        for i in range(len(vertex)):
+            M = np.array([vertex[i, 0], vertex[i, 1], vertex[i, 2], 1])
+            tmp = R_x.dot(M)
+            vertex[i, 0] = tmp[0]
+            vertex[i, 1] = tmp[1]
+            vertex[i, 2] = tmp[2]
 
+    if (axis[1] == 1):  # вращение вокруг оси y
+        alpha = angle[1]  # угол
+        R_y = np.array(np.zeros((3, 4)))
+        R_y[0, 0] = np.cos(alpha)
+        R_y[1, 1] = 1
+        R_y[2, 2] = np.cos(alpha)
+        R_y[0, 2] = np.sin(alpha)
+        R_y[2, 0] = (-1) * np.sin(alpha)
+        R_y[:, 3] = t
 
-def drawPoint(vertex, win, color):
-    width = win.width
-    center = width / 2
-    for i in range(len(vertex)):
-        point = Point(300 * vertex[i, 0] + center, -300 * vertex[i, 1] + center)
-        point.setFill(color)
-        point.draw(win)
+        for i in range(len(vertex)):
+            M = np.array([vertex[i, 0], vertex[i, 1], vertex[i, 2], 1])
+            tmp = R_y.dot(M)
+            vertex[i, 0] = tmp[0]
+            vertex[i, 1] = tmp[1]
+            vertex[i, 2] = tmp[2]
 
+    if (axis[2] == 1):  # вращение вокруг оси z
+        alpha = angle[2]  # угол
+        R_z = np.array(np.zeros((3, 4)))
+        R_z[0, 0] = np.cos(alpha)
+        R_z[1, 1] = np.cos(alpha)
+        R_z[2, 2] = 1
+        R_z[0, 1] = (-1) * np.sin(alpha)
+        R_z[1, 0] = np.sin(alpha)
+        R_z[:, 3] = t
 
-def drawEdges(vertex, edges, win, color):
-    for i in range(len(edges)):
-        triangle = edges[i]
-        width = win.width
-        center = width / 2
-        point1 = Point(-310 * vertex[int(triangle.first) - 1, 0] + center,
-                       -310 * vertex[int(triangle.first) - 1, 1] + center)
-        point2 = Point(-310 * vertex[int(triangle.second) - 1, 0] + center,
-                       -310 * vertex[int(triangle.second) - 1, 1] + center)
-        point3 = Point(-310 * vertex[int(triangle.third) - 1, 0] + center,
-                       -310 * vertex[int(triangle.third) - 1, 1] + center)
-        lineDotByDotfour(point1.x, point1.y, point2.x, point2.y, win, color)
-        lineDotByDotfour(point2.x, point2.y, point3.x, point3.y, win, color)
-        lineDotByDotfour(point3.x, point3.y, point1.x, point1.y, win, color)
+        for i in range(len(vertex)):
+            M = np.array([vertex[i, 0], vertex[i, 1], vertex[i, 2], 1])
+            tmp = R_z.dot(M)
+            vertex[i, 0] = tmp[0]
+            vertex[i, 1] = tmp[1]
+            vertex[i, 2] = tmp[2]
+
+    return vertex
 
 
 if __name__ == '__main__':
-    preparation(500)
-    embeddedLine()
+    im = Image.new('RGB', (1000, 1000), color=(255, 255, 255, 0))
+    filename = 'african_head.obj'
+    texture = Image.open('webber_diffuse.png')
+    texture = texture.convert('RGB')
+    width, height = texture.size
 
-    win = GraphWin('Line', 500, 500)
-    win.setBackground("grey")
-
-    x = Point(0, 1)
-    y = Point(10, 11)
-
-    filename = 'webber.obj'
+    draw = ImageDraw.Draw(im)
+    # scale = - im.width / 2 * .9
+    # center = im.width / 2
+    scale = -1
+    center = 0
     vertex, edges, texture_coordinates = getPointDraw(filename)
-    drawEdges(vertex, edges, win, "green")
-    # drawPoint(vertex, win, "green")
-    win.getMouse()
-    win.close()
+    vertex = new3DCoordinates(t=[0, 0, 4], axis=[1, 1, 1], angle=[0, 0, 0])
+
+    color = (255, 255, 255)
+    cam_direction = od.Point(0, 0, 1)
+    light_direction = od.Point(0, 0, 1)
+    z_buffer = np.array(list(repeat(sys.maxsize, im.width * im.height)))
+    z_buffer.shape = (im.width, im.height)
+    trianglesWithCoords = [od.Triangle(get_point(int(triangle.first) - 1),
+                                       get_point(int(triangle.second) - 1),
+                                       get_point(int(triangle.third) - 1),
+                                       get_texture_point(int(triangle.textureFirst) - 1),
+                                       get_texture_point(int(triangle.textureSecond) - 1),
+                                       get_texture_point(int(triangle.textureThird) - 1)) for triangle in edges]
+
+    for triangle in filter(lambda polygon: polygon.direction().angle(cam_direction) > 0,
+                           trianglesWithCoords):
+        light_angle = triangle.direction().angle(light_direction)
+
+        # Вообще говоря, для отрисовки треугольников color больше не нужен, поскольку цвет берется из файла текстур,
+        # но раз уж у нас остается функционал отрисовки линий, то передавать цвет все равно нужно
+        ds.paint_triangle(triangle, draw, z_buffer, light_angle, texture,
+                          color=tuple([int(i * light_angle) for i in list(color)]),
+                          lines=False)
+
+    im.save('man.png')
