@@ -1,7 +1,6 @@
 import numpy as np
 from graphics import *
 from PIL import Image, ImageDraw
-import draw_stuff
 
 from object_parser import getPointDraw
 
@@ -31,7 +30,7 @@ def swap(x, y):
     y = c
     return x, y
 
-
+#Брезенхэм
 def lineDotByDotfour(x0, y0, x1, y1, win, color):
     steeps = False
     if np.abs(x0 - x1) < np.abs(y0 - y1):
@@ -65,7 +64,7 @@ def lineDotByDotfour(x0, y0, x1, y1, win, color):
                 y += -1
             error -= 1
 
-
+#Ву
 def lineDotByDotBy(x0, y0, x1, y1, win, color):
     steeps = False
     if np.abs(x0 - x1) < np.abs(y0 - y1):
@@ -91,17 +90,17 @@ def lineDotByDotBy(x0, y0, x1, y1, win, color):
     for i in arr:
         if not steeps:
             point = Point(i, y)
-            point.setFill(color_rgb(int(255 * (1 - error)), 0, 0))
+            point.setFill(color_rgb(0, 0, 255))
             point.draw(win)
             point = Point(i, y + sy)
-            point.setFill(color_rgb(int(255 * (error)), 0, 0))
+            point.setFill(color_rgb(0, 0, 255))
             point.draw(win)
         else:
             point = Point(y, i)
-            point.setFill(color_rgb(int(255 * (1 - error)), 0, 0))
+            point.setFill(color_rgb(0, 0, 255))
             point.draw(win)
             point = Point(y + sy, i)
-            point.setFill(color_rgb(int(255 * (error)), 0, 0))
+            point.setFill(color_rgb(0, 0, 255))
             point.draw(win)
         error += derror
         if (error > 1):
@@ -119,7 +118,8 @@ def embeddedLine():
     line = Point(4, 10.9)
     line.setFill("white")
     line.draw(win)
-    line = Line(Point(9.9, 10), Point(190, 11.9))
+    line = Line(Point(9.9, 10), Point(190, 101.9))
+    line.setFill("white")
     line.draw(win)
     win.getMouse()
     win.close()
@@ -127,7 +127,7 @@ def embeddedLine():
 
 def preparation(width):
     win = GraphWin('Line', width, width)
-    win.setBackground("black")
+    win.setBackground("grey")
     center = width / 2
     # lineDotByDot(100, 100, 150, 150, win, "green")
     star(center, center, 13, center, win)
@@ -169,20 +169,18 @@ def drawEdges(vertex, edges, win, color):
 
 
 if __name__ == '__main__':
-    # preparation(1000)
-    # embeddedLine()
+    preparation(500)
+    embeddedLine()
 
-    win = GraphWin('Line', 1000, 1000)
-    win.setBackground("black")
+    win = GraphWin('Line', 500, 500)
+    win.setBackground("grey")
 
     x = Point(0, 1)
     y = Point(10, 11)
 
-    im = Image.new('RGBA', (200, 200), (255, 255, 255, 0))
-    draw_stuff.line_vu(x, y, im, (255, 255, 255))
-    # filename = 'webber.obj'
-    # vertex, edges, texture_coordinates = getPointDraw(filename)
-    # drawEdges(vertex, edges, win, "green")
+    filename = 'webber.obj'
+    vertex, edges, texture_coordinates = getPointDraw(filename)
+    drawEdges(vertex, edges, win, "green")
     # drawPoint(vertex, win, "green")
     win.getMouse()
     win.close()
